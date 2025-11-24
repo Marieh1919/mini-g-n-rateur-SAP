@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Générateur codification SAP — Pâle</title>
+
+  <!-- Polices -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;600&display=swap" rel="stylesheet">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    /* Thème pâle (uniquement) */
+    :root{
+      --bg-1: #f8fafc;
+      --bg-2: #eef2f7;
+      --muted: rgba(26,32,44,0.64);
+      --text-primary: #0f172a;
+      --panel-bg: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.98));
+      --input-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,250,0.99));
+      --button-start: #efe6ff; /* lilas pâle */
+      --button-end:   #e6d7ff;
+      --button-bg: linear-gradient(90deg, var(--button-start), var(--button-end));
+      --btn-text: #0f172a;
+      --glass-border: rgba(15,23,42,0.06);
+      --shadow: 0 8px 20px rgba(15,23,42,0.06);
+      --radius: 12px;
+      --neon-b: #06b6d4;
+      --logo-gradient-start: #7c3aed;
+      --logo-gradient-end: #0891b2;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px circle at 10% 20%, rgba(139,92,246,0.03), transparent 5%),
+                  radial-gradient(900px circle at 90% 80%, rgba(6,182,212,0.02), transparent 8%),
+                  linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color: var(--text-primary);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Layout */
+    .wrap{
+      max-width:1100px;
+      margin:32px auto;
+      padding:28px;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:28px;
+      align-items:start;
+    }
+
+    .panel{
+      background: var(--panel-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow);
+      padding:22px;
+      backdrop-filter: blur(6px) saturate(120%);
+    }
+
+    header.app-title{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      margin-bottom:12px;
+    }
+    .logo{
+      width:56px;
+      height:56px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 6px 20px rgba(13, 12, 30, 0.04), inset 0 -6px 18px rgba(0,0,0,0.02);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+    h1{
+      font-family: "Orbitron", sans-serif;
+      font-size:20px;
+      margin:0;
+      color: var(--text-primary);
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(2,1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+    label { font-size:12px; color:var(--muted); margin-bottom:6px; display:block; }
+    select, input[type="text"]{
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:none;
+      background: var(--input-bg);
+      color:var(--text-primary);
+      outline: none;
+      font-size:13px;
+      -webkit-appearance:none;
+    }
+
+    /* invalid state */
+    .invalid { box-shadow: 0 0 0 3px rgba(255,90,90,0.12); border-radius:10px; border:1px solid rgba(255,90,90,0.25); }
+
+    .full { grid-column: 1 / -1; display:flex; flex-direction:column; }
+
+    .clauses{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .clause-btn{
+      padding:8px 10px;
+      border-radius:10px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.01), rgba(0,0,0,0.005));
+      border: 1px solid rgba(0,0,0,0.04);
+      color:var(--muted);
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+    }
+    .clause-btn.active{
+      color:white;
+      background: linear-gradient(90deg, #8b5cf6, var(--neon-b));
+      box-shadow: 0 6px 18px rgba(99,102,241,0.06);
+    }
+
+    .actions{ display:flex; gap:10px; margin-top:12px; align-items:center; }
+    .btn{
+      padding:10px 14px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      font-weight:600;
+      color: var(--btn-text);
+      background: var(--button-bg);
+      box-shadow: 0 6px 22px rgba(8,7,25,0.04);
+    }
+    .btn.ghost{ background: transparent; border: 1px solid var(--glass-border); color:var(--muted); font-weight:700; }
+    .btn:active{ transform: translateY(1px); }
+
+    .result{
+      margin-top:18px;
+      padding:14px;
+      border-radius:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.98));
+      border:1px solid rgba(0,0,0,0.04);
+      font-family: "Orbitron", monospace;
+      font-size:15px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      color: var(--text-primary);
+    }
+    .code{ color: var(--text-primary); word-break:break-all; flex:1; }
+    .small-muted { color: var(--muted); font-size:12px; }
+
+    .side{ display:flex; flex-direction:column; gap:14px; }
+    .coords-panel{ padding:16px; }
+    .maps{ margin-top:10px; font-family: "Orbitron", monospace; font-size:13px; color:var(--text-primary); }
+    .link{ color:var(--neon-b); text-decoration:none; display:inline-block; margin-top:8px; font-size:13px; }
+
+    .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:28px; background: white; border:1px solid rgba(0,0,0,0.06); color:var(--text-primary); padding:10px 14px; border-radius:999px; box-shadow: 0 10px 30px rgba(2,6,23,0.06); display:none; z-index:9999; font-weight:600; letter-spacing:0.4px; }
+
+    @media (max-width:980px){ .wrap{ grid-template-columns: 1fr; padding:18px; } .controls{ grid-template-columns: 1fr 1fr; } }
+    @media (max-width:420px){ .controls{ grid-template-columns: 1fr; } .actions{ flex-direction:column; align-items:stretch; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <header class="app-title">
+        <div class="logo" aria-hidden="true">
+          <!-- simple glyph -->
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#g)"/>
+            <path d="M7 12h10M7 8h6M7 16h4" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+            <defs>
+              <linearGradient id="g" x1="0" x2="1">
+                <stop offset="0" stop-color="var(--logo-gradient-start)"/>
+                <stop offset="1" stop-color="var(--logo-gradient-end)"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div>
+          <h1>Générateur codification SAP</h1>
+        </div>
+      </header>
+
+      <div class="controls" role="form" aria-label="Générateur de code">
+        <div>
+          <label for="contrat">Contrat <span class="small-muted">(*)</span></label>
+          <select id="contrat" aria-required="true" required>
+            <option value="">Sélectionner...</option>
+            <option>A - Convention d’Acces de type Acces</option>
+            <option>I - Convention d’Acces de type Input</option>
+            <option>E - Entente promoteur</option>
+            <option>N - Nouveau Développement (sans convention ou entente)</option>
+            <option>X - Secteur existant sans Acces ni entente</option>
+            <option>Y - Secteur existant Acces</option>
+            <option>Z - Secteur existant Entente</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="unite">Type d’unité <span class="small-muted">(*)</span></label>
+          <select id="unite" aria-required="true" required>
+            <option value="">Sélectionner...</option>
+            <option>L - Locatif</option>
+            <option>C - Condo</option>
+            <option>M - Mixte (condo et Locatif dans un même site)</option>
+            <option>R - Autre (maison de ville, unifamiliales, etc)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="alimentation">Type d’alimentation <span class="small-muted">(*)</span></label>
+          <select id="alimentation" aria-required="true" required>
+            <option value="">Sélectionner...</option>
+            <option>S - Souterraine</option>
+            <option>A - Aérienne</option>
+            <option>E - Aerosouterraine</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="nb_commerce">Nombre de commerces <span class="small-muted">(*)</span></label>
+          <select id="nb_commerce" aria-required="true" required>
+            <!-- options filled by JS (00..50) and 00 will be selected by default -->
+          </select>
+        </div>
+
+        <div class="full">
+          <label>Clauses Entente</label>
+          <div class="clauses" id="clausesList">
+            <div class="clause-btn" data-value="16">Clause 16</div>
+            <div class="clause-btn" data-value="17">Clause 17</div>
+            <div class="clause-btn" data-value="181">Clause 18.1</div>
+            <div class="clause-btn" data-value="182">Clause 18.2</div>
+          </div>
+        </div>
+
+        <div>
+          <label for="montant">Montant (3 chiffres) — facultatif</label>
+          <input id="montant" type="text" placeholder="Ex: 045 ou vide" inputmode="numeric" maxlength="3" />
+        </div>
+
+        <div>
+          <label for="provenance">Provenance <span class="small-muted">(*)</span></label>
+          <select id="provenance" aria-required="true" required>
+            <option value="">Sélectionner...</option>
+            <option>1 - Permis</option>
+            <option>2 - Route</option>
+            <option>3 - Site ville (minutes)</option>
+            <option>4 - Courriel ville</option>
+            <option>5 - Appel/Courriel Promoteur</option>
+            <option>6 - Indicateurs des projets au Québec</option>
+            <option>7 - Site internet (petites annonces, site de courtier etc)</option>
+            <option>8 - Référence interne (ILM, Releveur, Ingénierie etc)</option>
+            <option>9 - VAP</option>
+          </select>
+        </div>
+      </div> <!-- controls -->
+
+      <div class="actions">
+        <button class="btn" id="generateBtn" title="Générer le code">Générer</button>
+        <button class="btn ghost" id="resetBtn" title="Réinitialiser">Réinitialiser</button>
+        <button class="btn" id="copyBtn" title="Copier le code">Copier</button>
+      </div>
+
+      <div class="result" aria-live="polite">
+        <div>
+          <div class="small-muted">Code généré</div>
+          <div class="code" id="resultat">—</div>
+        </div>
+        <div style="min-width:90px; text-align:right;">
+          <div class="small-muted">Clauses</div>
+          <div id="resultClauses" style="font-weight:700; color:var(--neon-b); font-size:13px;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="panel coords-panel">
+        <h2 style="margin:0 0 8px 0; font-family:Orbitron, monospace; font-size:16px;">Convertisseur Coordonnées</h2>
+        <label for="coords">Coordonnées (lat, long)</label>
+        <input id="coords" type="text" placeholder="Ex: 46.81952267808162, -71.23155456723092" />
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn" id="genCoordsBtn" style="flex:1">Générer</button>
+          <button class="btn ghost" id="resetCoordsBtn" style="width:44%;">Réinitialiser</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn" id="copyCoordsBtn" style="flex:1">Copier</button>
+          <a id="mapsLink" class="link" target="_blank" rel="noopener">Ouvrir dans Maps</a>
+        </div>
+        <div class="maps" id="maps">—</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast">Copié !</div>
+
+  <script>
+    // Fill commerce options 00..50 and set default to "00"
+    (function fillCommerce(){
+      const sel = document.getElementById('nb_commerce');
+      sel.innerHTML = '';
+      for(let i=0;i<=50;i++){
+        const v = String(i).padStart(2,'0');
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v;
+        sel.appendChild(o);
+      }
+      // default to 00
+      sel.value = '00';
+    })();
+
+    // Clause toggles
+    let selectedClauses = [];
+    document.querySelectorAll('.clause-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const val = btn.dataset.value;
+        if(selectedClauses.includes(val)){
+          selectedClauses = selectedClauses.filter(x=>x!==val);
+          btn.classList.remove('active');
+        } else {
+          selectedClauses.push(val);
+          btn.classList.add('active');
+        }
+        updateClausesPreview();
+      });
+    });
+
+    function updateClausesPreview(){
+      document.getElementById('resultClauses').innerText = selectedClauses.length ? selectedClauses.join(',') : '—';
+    }
+
+    // Toast util
+    const toastEl = document.getElementById('toast');
+    let toastTimer = null;
+    function showToast(text='Copié !', ms=2400){
+      toastEl.textContent = text;
+      toastEl.style.display = 'block';
+      toastEl.style.opacity = '1';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>{
+        toastEl.style.opacity = '0';
+        setTimeout(()=> toastEl.style.display = 'none', 300);
+      }, ms);
+    }
+
+    // Validate required selects and show invalid styling
+    function validateRequired(){
+      const requiredIds = ['contrat','unite','alimentation','nb_commerce','provenance'];
+      const missing = [];
+      requiredIds.forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el.value || el.value.trim() === ''){
+          missing.push(id);
+          el.classList.add('invalid');
+        } else {
+          el.classList.remove('invalid');
+        }
+      });
+      return missing;
+    }
+
+    // Remove invalid style on change
+    ['contrat','unite','alimentation','nb_commerce','provenance'].forEach(id=>{
+      document.getElementById(id).addEventListener('change', ()=> {
+        document.getElementById(id).classList.remove('invalid');
+      });
+    });
+
+    // Generate code:
+    // Format: <contrat><unite><alimentation><nb_commerce><clauses_if_any><montant_if_any>-<provenance>
+    // Example:
+    // - Required fields only: NRS00-5
+    // - With montant 120: NRS00120-5
+    function genererCode(){
+      const missing = validateRequired();
+      if(missing.length){
+        showToast('Veuillez remplir les champs obligatoires', 3000);
+        return null;
+      }
+
+      const contrat = document.getElementById('contrat').value.split(' ')[0];
+      const unite = document.getElementById('unite').value.split(' ')[0];
+      const alimentation = document.getElementById('alimentation').value.split(' ')[0];
+      const nb_commerce = document.getElementById('nb_commerce').value;
+      const provenance = document.getElementById('provenance').value.split(' ')[0];
+
+      let montantRaw = document.getElementById('montant').value.replace(/\D/g,'');
+      let montantPart = '';
+      if(montantRaw && montantRaw.length > 0){
+        montantRaw = montantRaw.slice(-3).padStart(3,'0');
+        montantPart = montantRaw;
+      }
+
+      const clause_str = selectedClauses.join('');
+
+      const code = `${contrat}${unite}${alimentation}${nb_commerce}${clause_str}${montantPart}-${provenance}`;
+      document.getElementById('resultat').textContent = code;
+      updateClausesPreview();
+      return code;
+    }
+
+    // Copy code
+    async function copierCode(){
+      const code = document.getElementById('resultat').textContent;
+      if(!code || code === '—'){
+        showToast('Aucun code à copier', 1800);
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(code);
+        showToast('Code copié ✔', 1600);
+      } catch(e){
+        const ta = document.createElement('textarea');
+        ta.value = code; ta.style.position='fixed'; ta.style.left='-9999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); showToast('Code copié ✔', 1600); } catch(_){ showToast('Impossible de copier'); }
+        document.body.removeChild(ta);
+      }
+    }
+
+    // Reset form: set selects to defaults (selectIndex=0 for selects that have placeholder,
+    // nb_commerce will be set to 00 by default)
+    function reinitialiser(){
+      ['contrat','unite','alimentation','provenance'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.selectedIndex = 0;
+        if(el) el.classList.remove('invalid');
+      });
+      // nb_commerce default to 00
+      const nb = document.getElementById('nb_commerce');
+      if(nb) nb.value = '00';
+      document.getElementById('montant').value = '';
+      document.getElementById('resultat').textContent = '—';
+      selectedClauses = [];
+      document.querySelectorAll('.clause-btn').forEach(b => b.classList.remove('active'));
+      updateClausesPreview();
+    }
+
+    // Coordinates helper (unchanged)
+    let coordsArrondies = '';
+    function genererCoords(){
+      const coords = document.getElementById('coords').value.trim();
+      if(!coords){ document.getElementById('maps').textContent='—'; coordsArrondies=''; updateMapsLink(''); return; }
+      const parts = coords.split(',').map(s=>s.trim()).filter(Boolean);
+      if(parts.length !== 2){ document.getElementById('maps').textContent='Coordonnées invalides'; coordsArrondies=''; updateMapsLink(''); return; }
+      const lat = Number(parts[0]);
+      const lon = Number(parts[1]);
+      if(Number.isNaN(lat) || Number.isNaN(lon)){ document.getElementById('maps').textContent='Coordonnées invalides'; coordsArrondies=''; updateMapsLink(''); return; }
+      const latS = lat.toFixed(6);
+      const lonS = lon.toFixed(6);
+      coordsArrondies = `${latS}, ${lonS}`;
+      document.getElementById('maps').textContent = coordsArrondies;
+      updateMapsLink(`${latS},${lonS}`);
+      return coordsArrondies;
+    }
+    function updateMapsLink(latlon){
+      const a = document.getElementById('mapsLink');
+      if(!latlon){ a.href = '#'; a.textContent = 'Ouvrir dans Maps'; a.style.opacity = 0.6; a.onclick = (e)=> e.preventDefault(); return; }
+      a.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(latlon)}`;
+      a.textContent = 'Ouvrir dans Maps';
+      a.style.opacity = 1;
+      a.onclick = null;
+    }
+    async function copierCoords(){
+      if(!coordsArrondies){ showToast('Aucune coordonnée'); return; }
+      try{ await navigator.clipboard.writeText(coordsArrondies); showToast('Coordonnées copiées ✔'); } catch(e){
+        const ta = document.createElement('textarea'); ta.value = coordsArrondies; ta.style.position='fixed'; ta.style.left='-9999px';
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); showToast('Coordonnées copiées ✔'); } catch(_) { showToast('Impossible de copier'); }
+        document.body.removeChild(ta);
+      }
+    }
+
+    // Wire up buttons
+    document.getElementById('generateBtn').addEventListener('click', genererCode);
+    document.getElementById('copyBtn').addEventListener('click', copierCode);
+    document.getElementById('resetBtn').addEventListener('click', reinitialiser);
+
+    document.getElementById('genCoordsBtn').addEventListener('click', genererCoords);
+    document.getElementById('resetCoordsBtn').addEventListener('click', ()=>{
+      document.getElementById('coords').value = '';
+      document.getElementById('maps').textContent = '—';
+      coordsArrondies = '';
+      updateMapsLink('');
+    });
+    document.getElementById('copyCoordsBtn').addEventListener('click', copierCoords);
+
+    // UX: Enter to generate where relevant
+    document.getElementById('montant').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ genererCode(); }});
+    document.getElementById('coords').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ genererCoords(); }});
+
+    // Initial state: ensure nb_commerce is '00'
+    reinitialiser();
+    updateMapsLink('');
+  </script>
+</body>
+</html>
